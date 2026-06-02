@@ -1,31 +1,30 @@
-class Node {
-    int batchId;
-    String cropName;
-    int quantity;
-    int height;
-    Node left, right;
-
-    Node(int batchId, String cropName, int quantity) {
-        this.batchId = batchId;
-        this.cropName = cropName;
-        this.quantity = quantity;
-        this.height = 1;
-    }
-}
-
 public class AgroChainAVL {
+
+    static class Node {
+        int batchId, height;
+        String crop;
+        Node left, right;
+
+        Node(int batchId, String crop) {
+            this.batchId = batchId;
+            this.crop = crop;
+            this.height = 1;
+        }
+    }
 
     Node root;
 
-    int height(Node node) {
-        return node == null ? 0 : node.height;
+    int height(Node n) {
+        return (n == null) ? 0 : n.height;
     }
 
-    int getBalance(Node node) {
-        return node == null ? 0 : height(node.left) - height(node.right);
+    int getBalance(Node n) {
+        return (n == null) ? 0 : height(n.left) - height(n.right);
     }
 
     Node rightRotate(Node y) {
+        System.out.println("LL Rotation Performed at Node " + y.batchId);
+
         Node x = y.left;
         Node t2 = x.right;
 
@@ -39,6 +38,8 @@ public class AgroChainAVL {
     }
 
     Node leftRotate(Node x) {
+        System.out.println("RR Rotation Performed at Node " + x.batchId);
+
         Node y = x.right;
         Node t2 = y.left;
 
@@ -51,15 +52,17 @@ public class AgroChainAVL {
         return y;
     }
 
-    Node insert(Node node, int batchId, String cropName, int quantity) {
+    Node insert(Node node, int batchId, String crop) {
 
-        if (node == null)
-            return new Node(batchId, cropName, quantity);
+        if (node == null) {
+            System.out.println("Inserted Batch " + batchId + " - " + crop);
+            return new Node(batchId, crop);
+        }
 
         if (batchId < node.batchId)
-            node.left = insert(node.left, batchId, cropName, quantity);
+            node.left = insert(node.left, batchId, crop);
         else if (batchId > node.batchId)
-            node.right = insert(node.right, batchId, cropName, quantity);
+            node.right = insert(node.right, batchId, crop);
         else
             return node;
 
@@ -67,43 +70,48 @@ public class AgroChainAVL {
 
         int balance = getBalance(node);
 
+        // LL Case
         if (balance > 1 && batchId < node.left.batchId)
             return rightRotate(node);
 
+        // RR Case
         if (balance < -1 && batchId > node.right.batchId)
             return leftRotate(node);
 
+        // LR Case
         if (balance > 1 && batchId > node.left.batchId) {
             node.left = leftRotate(node.left);
+            System.out.println("LR Rotation Performed");
             return rightRotate(node);
         }
 
+        // RL Case
         if (balance < -1 && batchId < node.right.batchId) {
             node.right = rightRotate(node.right);
+            System.out.println("RL Rotation Performed");
             return leftRotate(node);
         }
 
         return node;
     }
 
-    Node search(Node node, int batchId) {
-        if (node == null || node.batchId == batchId)
+    Node search(Node node, int key) {
+
+        if (node == null || node.batchId == key)
             return node;
 
-        if (batchId < node.batchId)
-            return search(node.left, batchId);
+        if (key < node.batchId)
+            return search(node.left, key);
 
-        return search(node.right, batchId);
+        return search(node.right, key);
     }
 
     void inorder(Node node) {
         if (node != null) {
             inorder(node.left);
             System.out.println(
-                "Batch ID: " + node.batchId +
-                ", Crop: " + node.cropName +
-                ", Quantity: " + node.quantity
-            );
+                    "Batch ID: " + node.batchId +
+                    " | Crop: " + node.crop);
             inorder(node.right);
         }
     }
@@ -112,22 +120,38 @@ public class AgroChainAVL {
 
         AgroChainAVL tree = new AgroChainAVL();
 
-        tree.root = tree.insert(tree.root, 150, "Corn", 450);
-        tree.root = tree.insert(tree.root, 101, "Rice", 500);
-        tree.root = tree.insert(tree.root, 200, "Sugarcane", 600);
-        tree.root = tree.insert(tree.root, 120, "Wheat", 300);
-        tree.root = tree.insert(tree.root, 180, "Cotton", 250);
+        System.out.println("===== AGROCHAIN INVENTORY MANAGEMENT =====");
 
-        System.out.println("Crop Inventory Report:");
+        tree.root = tree.insert(tree.root, 30, "Rice");
+        tree.root = tree.insert(tree.root, 20, "Wheat");
+        tree.root = tree.insert(tree.root, 10, "Corn");      // LL Rotation
+
+        tree.root = tree.insert(tree.root, 40, "Cotton");
+        tree.root = tree.insert(tree.root, 50, "Sugarcane"); // RR Rotation
+
+        System.out.println("\n===== SORTED INVENTORY =====");
+
         tree.inorder(tree.root);
 
-        Node result = tree.search(tree.root, 120);
+        System.out.println("\n===== SEARCH OPERATION =====");
+
+        Node result = tree.search(tree.root, 40);
 
         if (result != null) {
-            System.out.println("\nCrop Found:");
+            System.out.println("Record Found");
             System.out.println("Batch ID: " + result.batchId);
-            System.out.println("Crop: " + result.cropName);
-            System.out.println("Quantity: " + result.quantity);
+            System.out.println("Crop: " + result.crop);
         }
+
+        System.out.println("\n===== AVL TREE STATISTICS =====");
+
+        System.out.println("Tree Height: " +
+                tree.height(tree.root));
+
+        System.out.println("Root Node: " +
+                tree.root.batchId);
+
+        System.out.println("Balance Factor: " +
+                tree.getBalance(tree.root));
     }
 }
